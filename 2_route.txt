@@ -1,0 +1,5 @@
+Tambahkan route ini di routes/web.php (setelah route POST trah-settings):
+
+```php
+Route::delete("/trah-settings/image/{field}", [TrahSettingsController::class, "deleteImage"])->name("trah-settings.delete-image");
+```
