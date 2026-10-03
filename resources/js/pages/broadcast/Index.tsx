@@ -1,4 +1,4 @@
-﻿import { Head, router, usePage } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +27,7 @@ Anda diundang dalam acara *{NAMA_ACARA}*.
 *Tempat:* {TEMPAT}
 *Alamat:* {ALAMAT}
 
-Daftarkan keluarga/teman (max 4 orang):
+Daftarkan Tamu Tambahan (maks 3 orang):
 {LINK_REGISTRASI}
 
 Semua tamu akan mendapat barcode untuk check-in.`
@@ -50,6 +50,7 @@ Semua tamu akan mendapat barcode untuk check-in.`
     const link = `${baseUrl}/register/${sampleToken}`;
 
     return text
+      .replace(/{NAMA_PERUSAHAAN}/g, acara?.nama_perusahaan || "Nama Perusahaan")
       .replace(/{NAMA_TAMU}/g, filteredTamu[0]?.nama || "Nama Tamu Utama")
       .replace(/{NAMA_ACARA}/g, acara?.nama || "Nama Acara")
       .replace(/{TANGGAL}/g, acara?.tanggal || "Tanggal")
@@ -147,7 +148,7 @@ Semua tamu akan mendapat barcode untuk check-in.`
                 className="w-full p-2 border rounded h-48 font-mono text-sm"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Tag tersedia: NAMA_TAMU, NAMA_ACARA, TANGGAL, WAKTU, TEMPAT, ALAMAT, LINK_REGISTRASI
+                Tag tersedia: NAMA_TAMU, NAMA_ACARA, NAMA_PERUSAHAAN, TANGGAL, WAKTU, TEMPAT, ALAMAT, BATAS_KONFIRMASI, LINK_REGISTRASI
               </p>
             </div>
 
@@ -185,7 +186,7 @@ Semua tamu akan mendapat barcode untuk check-in.`
                   onClick={() => setPreview(false)}
                   className="text-gray-500 hover:text-gray-700 font-bold"
                 >
-                  ✕
+                  ?
                 </button>
               </div>
               <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap text-sm font-sans">
