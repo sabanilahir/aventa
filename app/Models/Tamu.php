@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -14,7 +13,7 @@ class Tamu extends Model
         "nama_depan",
         "nama_belakang",
         "nama_perusahaan",
-        "email",
+        "email",\n        "grup_id",
         "parent_id",
         "token",
         "no_telepon",
@@ -34,9 +33,13 @@ class Tamu extends Model
         return $this->belongsTo(Acara::class, "acara_id");
     }
 
+    public function grup(): BelongsTo
+    {
+        return $this->belongsTo(GrupTamu::class, "grup_id");
+    }
+
     public function jawaban(): HasMany
     {
         return $this->hasMany(JawabanTamu::class, "tamu_id");
     }
 }
-
