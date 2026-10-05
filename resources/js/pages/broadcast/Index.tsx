@@ -2,8 +2,8 @@ import { Head, router, usePage } from "@inertiajs/react";
 import AppLayout from "@/layouts/app-layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Send, Eye, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Send, Eye, Loader2, Paperclip, AlertCircle, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 
@@ -17,7 +17,9 @@ export default function BroadcastIndex() {
   const allTamu = (props.tamu as any[]) || [];
 
   const [selectedGrup, setSelectedGrup] = useState("all");
-  const [message, setMessage] = useState(
+
+  // Menggunakan template dari database jika ada, jika tidak gunakan default fallback
+  const defaultTemplate = acara?.wa_template ||
 `Halo *{NAMA_TAMU}*,
 
 Anda diundang dalam acara *{NAMA_ACARA}*.
@@ -30,12 +32,20 @@ Anda diundang dalam acara *{NAMA_ACARA}*.
 Daftarkan Tamu Tambahan (maks 3 orang):
 {LINK_REGISTRASI}
 
-Semua tamu akan mendapat barcode untuk check-in.`
-  );
+Semua tamu akan mendapat barcode untuk check-in.`;
+
+  const [message, setMessage] = useState(defaultTemplate);
   const [preview, setPreview] = useState(false);
   const [sending, setSending] = useState(false);
 
-  // PERBAIKAN: Hanya mengambil Tamu Utama (!t.parent_id / parent_id === null)
+  // Jika acara berubah, perbarui template pesannya
+  useEffect(() => {
+    if (acara?.wa_template) {
+      setMessage(acara.wa_template);
+    }
+  }, [acara]);
+
+  // Hanya mengambil Tamu Utama (!t.parent_id / parent_id === null)
   const tamuUtamaList = allTamu.filter((t: any) => !t.parent_id);
 
   // Filter berdasarkan grup yang dipilih
@@ -106,25 +116,36 @@ Semua tamu akan mendapat barcode untuk check-in.`
   return (
     <AppLayout>
       <Head title="Broadcast WA" />
-      <div className="p-6 space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.visit("/events")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />Kembali
-          </Button>
-          <h1 className="text-2xl font-bold">Broadcast WhatsApp (Tamu Utama)</h1>
+
+      {/* DI SINI PERUBAHANNYA: max-w-5xl mx-auto dihapus, diganti menjadi w-full */}
+      <div className="p-6 space-y-6 w-full">
+
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => router.visit("/events")} className="px-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Kirim Broadcast</h1>
+              <p className="text-sm text-gray-500">Event: <span className="font-semibold">{acara?.nama || "Pilih Event"}</span></p>
+            </div>
+          </div>
         </div>
 
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Grup Tamu</label>
+        {/* Card sekarang membentang penuh mengikuti layar */}
+        <Card className="w-full border-slate-200 shadow-sm">
+          <CardContent className="p-6 space-y-6">
+
+            {/* Info Target Broadcast */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Pilih Grup Target</label>
                 <select
                   value={selectedGrup}
                   onChange={(e) => setSelectedGrup(e.target.value)}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                 >
-                  <option value="all">Semua Tamu Utama ({tamuUtamaList.length})</option>
+                  <option value="all">Semua Tamu Utama ({tamuUtamaList.length} Kontak)</option>
                   {grups.map((g: any) => (
                     <option key={g.id} value={g.id}>
                       {g.nama}
@@ -132,69 +153,133 @@ Semua tamu akan mendapat barcode untuk check-in.`
                   ))}
                 </select>
               </div>
-              <div className="p-4 bg-blue-50 rounded flex items-center justify-center">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-800">{filteredTamu.length}</p>
-                  <p className="text-sm text-blue-600">Tamu Utama Terpilih</p>
+
+              <div className="flex bg-blue-50/50 border border-blue-100 rounded-lg p-4 gap-4 items-center">
+                <div className="bg-blue-100 p-3 rounded-full">
+                  <AlertCircle className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-blue-900">Target Penerima</h4>
+                  <p className="text-sm text-blue-800">
+                    Akan dikirim ke <strong>{filteredTamu.length} nomor WhatsApp</strong>.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Template Pesan</label>
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="w-full p-2 border rounded h-48 font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Tag tersedia: NAMA_TAMU, NAMA_ACARA, NAMA_PERUSAHAAN, TANGGAL, WAKTU, TEMPAT, ALAMAT, BATAS_KONFIRMASI, LINK_REGISTRASI
-              </p>
+            <div className="border-t border-slate-100 pt-6 space-y-6">
+              {/* Lampiran Video / Media */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Lampiran Media</label>
+                {acara?.video_url ? (
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-lg md:w-1/2">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-emerald-100 p-2 rounded-md">
+                        <Paperclip className="w-5 h-5 text-emerald-700" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-emerald-800 text-sm">Video Undangan Terlampir</p>
+                        <p className="text-xs text-emerald-600">Disimpan dari pengaturan Event</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 text-sm flex items-center gap-2 md:w-1/2">
+                    <Paperclip className="w-4 h-4" />
+                    Tidak ada video undangan yang dilampirkan.
+                  </div>
+                )}
+              </div>
+
+              {/* Template Pesan */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">Isi Pesan / Caption</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="w-full p-4 border border-gray-300 rounded-lg h-64 font-mono text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors bg-gray-50/30"
+                  placeholder="Ketik pesan broadcast..."
+                />
+                <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-100">
+                  <span className="font-semibold">Tag tersedia:</span> <br/>
+                  <code className="text-pink-600">{"{NAMA_TAMU}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{NAMA_ACARA}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{NAMA_PERUSAHAAN}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{TANGGAL}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{WAKTU}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{TEMPAT}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{ALAMAT}"}</code>,
+                  <code className="text-pink-600 ml-2">{"{LINK_REGISTRASI}"}</code>
+                </p>
+              </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button onClick={() => setPreview(true)} variant="outline" className="flex-1">
-                <Eye className="w-4 h-4 mr-2" />Preview
+            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <Button onClick={() => setPreview(true)} variant="outline" className="flex-1 h-12 text-gray-700 font-semibold border-gray-300">
+                <Eye className="w-5 h-5 mr-2" /> Preview Pesan
               </Button>
               <Button
                 onClick={handleSend}
                 disabled={sending || filteredTamu.length === 0 || !waSettings}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 h-12 text-white font-semibold shadow-sm"
               >
                 {sending ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />Mengirim...
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Mengirim...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4 mr-2" />Kirim ke {filteredTamu.length} Tamu Utama
+                    <Send className="w-5 h-5 mr-2" /> Kirim ke {filteredTamu.length} Tamu
                   </>
                 )}
               </Button>
             </div>
+
+            {!waSettings && (
+              <p className="text-sm text-red-500 text-center font-medium mt-2">
+                ⚠️ Anda tidak dapat mengirim broadcast karena konfigurasi WhatsApp Gateway belum diatur.
+              </p>
+            )}
+
           </CardContent>
         </Card>
       </div>
 
+      {/* Modal Preview */}
       {preview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-lg mx-4">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Preview Pesan</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-lg shadow-2xl border-0">
+            <CardContent className="p-0">
+              <div className="flex justify-between items-center p-4 border-b bg-gray-50 rounded-t-lg">
+                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                  <Eye className="w-5 h-5 text-gray-500" /> Preview Pesan
+                </h2>
                 <button
                   onClick={() => setPreview(false)}
-                  className="text-gray-500 hover:text-gray-700 font-bold"
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1"
                 >
-                  ?
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-              <pre className="bg-gray-100 p-4 rounded whitespace-pre-wrap text-sm font-sans">
-                {replaceTemplate(message)}
-              </pre>
-              <Button onClick={() => setPreview(false)} className="mt-4 w-full">
-                Tutup
-              </Button>
+
+              <div className="p-6">
+                {acara?.video_url && (
+                  <div className="mb-4 bg-emerald-50 text-emerald-700 text-xs font-semibold p-2 rounded flex items-center gap-2 border border-emerald-100">
+                    <Paperclip className="w-4 h-4" />
+                    Pesan ini akan dikirim bersama dengan Video Undangan
+                  </div>
+                )}
+                <div className="bg-[#e5ddd5] p-4 rounded-lg relative shadow-inner overflow-y-auto max-h-[60vh]">
+                  {/* Bubble Chat Style */}
+                  <div className="bg-white p-3 rounded-lg rounded-tl-none shadow-sm text-sm font-sans whitespace-pre-wrap text-gray-800 break-words leading-relaxed">
+                    {replaceTemplate(message)}
+                  </div>
+                </div>
+
+                <Button onClick={() => setPreview(false)} className="mt-6 w-full h-11 font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 border-0">
+                  Tutup Preview
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>

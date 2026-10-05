@@ -1,7 +1,8 @@
-﻿import "../css/app.css";
+import "../css/app.css";
 import { createInertiaApp } from "@inertiajs/react";
 import { createRoot } from "react-dom/client";
 import { route as routeFn } from "ziggy-js";
+
 declare global {
     const route: typeof routeFn;
 }
@@ -12,7 +13,7 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => {
         const pages = import.meta.glob("./pages/**/*.tsx", { eager: true });
-        return pages["./pages/" + name.replace(/\\\//g, "/") + ".tsx"];
+        return pages["./pages/" + name.replace(/\//g, "/") + ".tsx"];
     },
     setup({ el, App, props }) {
         const root = createRoot(el);

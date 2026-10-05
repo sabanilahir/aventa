@@ -1,10 +1,10 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\WaSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class WaSettingController extends Controller
 {
@@ -40,15 +40,24 @@ class WaSettingController extends Controller
         ]);
 
         $setting = WaSetting::first();
-        if (str_starts_with($validated['api_token'], '***')) {
-            if ($setting) { unset($validated['api_token']); }
-            else { return redirect()->back()->withErrors(['api_token' => 'API Token valid diperlukan']); }
+        
+        // Jika token di-masker (dimulai ***), jangan update token
+        $apiTokenInput = $validated['api_token'] ?? '';
+        if (strpos($apiTokenInput, '***') === 0) {
+            unset($validated['api_token']);
+        }
+        
+        // Jika diaktifkan, nonaktifkan yang lain
+        $isActive = $validated['is_active'] ?? false;
+        if ($isActive) {
+            WaSetting::where('id', '!=', $setting->id ?? 0)->update(['is_active' => false]);
         }
 
-        if ($validated['is_active'] ?? false) { WaSetting::where('is_active', true)->update(['is_active' => false]); }
-
-        if ($setting) { $setting->update($validated); }
-        else { WaSetting::create($validated); }
+        if ($setting) { 
+            $setting->update($validated); 
+        } else { 
+            WaSetting::create($validated); 
+        }
 
         return redirect()->back()->with('success', 'Pengaturan WhatsApp berhasil disimpan');
     }
@@ -58,7 +67,7 @@ class WaSettingController extends Controller
         $request->validate(['api_token' => 'required|string']);
         $apiToken = $request->api_token;
 
-        if (str_starts_with($apiToken, '***')) {
+        if (strpos($apiToken, '***') === 0) {
             $setting = WaSetting::first();
             if (!$setting || !$setting->api_token) {
                 return response()->json(['success' => false, 'message' => 'API Token tidak ditemukan'], 400);
@@ -144,4 +153,3 @@ class WaSettingController extends Controller
         }
     }
 }
-

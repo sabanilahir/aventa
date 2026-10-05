@@ -7,11 +7,28 @@ import { Users, UserCheck, UserX, Gift, Package, Calendar, MapPin, Clock } from 
 export default function Dashboard() {
   const { props } = usePage();
   const { stats, acara, acaraList } = props as any;
-  
+
   const handleChange = (id: string) => {
     router.get("/dashboard?acara_id=" + id);
   };
-  
+   const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    // Memotong bagian jam (T00:00:00 atau 00:00:00) dan menyisakan YYYY-MM-DD
+    const dateOnly = dateString.split('T')[0].split(' ')[0];
+
+    try {
+      // (Opsional) Mengubah format menjadi 30 Okt 2026 agar lebih cantik di UI
+      const dateObj = new Date(dateOnly);
+      return dateObj.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    } catch (e) {
+      return dateOnly; // Fallback jika gagal format
+    }
+  };
+
   const cards = [
     { title: "Jumlah Tamu", value: `${stats?.total_tamu || 0} (${stats?.total_pax || 0} pax)`, color: "bg-blue-600" },
     { title: "Akan Hadir", value: `${stats?.akan_hadir || 0} (${stats?.pax_akan_hadir || 0} pax)`, color: "bg-green-600" },
@@ -30,7 +47,7 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
             {acara && <p className="text-sm text-gray-500">{acara.nama}</p>}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium">Pilih Acara:</label>
             <select
@@ -69,7 +86,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>{acara.tanggal}</span>
+                  <span>{formatDate(acara.tanggal)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-gray-400" />

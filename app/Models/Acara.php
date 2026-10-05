@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Acara extends Model
 {
     protected $table = "acara";
+
     protected $fillable = [
         "nama",
         "tanggal",
@@ -20,6 +21,7 @@ class Acara extends Model
         "status",
         "qr_per_keluarga",
         "wa_template",
+        "video_url", // 👉 Tambahkan baris ini agar video bisa disimpan
     ];
 
     protected $casts = [
@@ -48,4 +50,3 @@ class Acara extends Model
         return $query->where("status", "!=", "archived")->orderBy("id", "desc")->limit(1);
     }
 }
-

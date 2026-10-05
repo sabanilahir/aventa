@@ -1,3 +1,4 @@
+
 <?php
 
 use App\Http\Controllers\GuestRegisterController;
@@ -29,8 +30,15 @@ use App\Http\Controllers\BroadcastController;
 use App\Http\Controllers\QrCodeController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redirect;
+use App\Models\ShortLink;
 
 Route::get("/", fn() => Redirect::to("/dashboard"))->name("home");
+
+// --- TAMBAHKAN ROUTE SHORT LINK DI SINI ---
+Route::get('/s/{code}', function ($code) {
+    $shortLink = ShortLink::where('code', $code)->firstOrFail();
+    return redirect()->away($shortLink->url_asli);
+});
 
 Route::withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
     Route::get("/register/{token}", [GuestRegisterController::class, "show"])->name("guest.register");
@@ -71,6 +79,8 @@ Route::middleware(["auth"])->group(function () {
     Route::put("/permissions/{permission}", [PermissionController::class, "update"])->name("permissions.update");
     Route::delete("/permissions/{permission}", [PermissionController::class, "destroy"])->name("permissions.destroy");
     Route::get("/setting-app", [SettingAppController::class, "index"])->name("setting-app.index");
+    Route::post("/setting-app", [SettingAppController::class, "update"])->name("setting-app.update");
+    Route::get("/setting-app", [SettingAppController::class, "edit"])->name("setting-app.index");
     Route::post("/setting-app", [SettingAppController::class, "update"])->name("setting-app.update");
     Route::post("/setting-app/upload", [SettingAppController::class, "upload"])->name("setting-app.upload");
     Route::get("/backups", [BackupController::class, "index"])->name("backups.index");
@@ -147,4 +157,3 @@ Route::middleware(["auth"])->group(function () {
 });
 
 require __DIR__ . "/auth.php";
-

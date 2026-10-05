@@ -59,6 +59,24 @@ export default function EventIndex() {
     { id: "archived", label: "Arsip" },
   ];
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "-";
+    // Memotong bagian jam (T00:00:00 atau 00:00:00) dan menyisakan YYYY-MM-DD
+    const dateOnly = dateString.split('T')[0].split(' ')[0];
+
+    try {
+      // (Opsional) Mengubah format menjadi 30 Okt 2026 agar lebih cantik di UI
+      const dateObj = new Date(dateOnly);
+      return dateObj.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      });
+    } catch (e) {
+      return dateOnly; // Fallback jika gagal format
+    }
+  };
+
   return (
     <AppLayout>
       <Head title="Manajemen Event" />
@@ -118,7 +136,7 @@ export default function EventIndex() {
                 <div onClick={() => router.get(`/events/${event.id}`)} className="p-4 cursor-pointer">
                   <h3 className="font-semibold text-lg mb-3 line-clamp-1">{event.nama}</h3>
                   <div className="space-y-2 text-sm text-gray-500 mb-4">
-                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4" /><span className="truncate">{event.tanggal || "-"}</span></div>
+                    <div className="flex items-center gap-2"><Calendar className="w-4 h-4" /><span className="truncate">{formatDate(event.tanggal) || "-"}</span></div>
                     <div className="flex items-center gap-2"><Clock className="w-4 h-4" /><span className="truncate">{event.waktu_mulai || "-"}</span></div>
                     <div className="flex items-center gap-2"><MapPin className="w-4 h-4" /><span className="truncate">{event.tempat || event.alamat || "-"}</span></div>
                   </div>
