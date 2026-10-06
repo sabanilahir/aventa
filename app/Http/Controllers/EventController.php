@@ -25,6 +25,7 @@ class EventController extends Controller
             'nama' => 'required|string|max:255',
             'tanggal' => 'nullable|date',
             'waktu_mulai' => 'nullable',
+            'waktu_selesai' => 'nullable',
             'tempat' => 'nullable|string|max:255',
             'alamat' => 'nullable|string',
             'qr_per_keluarga' => 'nullable|integer|min:1',
@@ -89,6 +90,7 @@ class EventController extends Controller
             'nama' => 'required|string|max:255',
             'tanggal' => 'nullable|date',
             'waktu_mulai' => 'nullable',
+            'waktu_selesai' => 'nullable',
             'tempat' => 'nullable|string|max:255',
             'alamat' => 'nullable|string',
             'qr_per_keluarga' => 'nullable|integer|min:1',
@@ -109,3 +111,7 @@ class EventController extends Controller
         return redirect('/events')->with('success', 'Event berhasil dihapus!');
     }
 }
+
+
+
+

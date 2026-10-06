@@ -12,6 +12,7 @@ export default function EventCreate() {
     nama: "",
     tanggal: "",
     waktu_mulai: "",
+    waktu_selesai: "",
     tempat: "",
     alamat: "",
     qr_per_keluarga: 4,
@@ -88,8 +89,15 @@ export default function EventCreate() {
                     value={data.waktu_mulai}
                     onChange={(e) => setData('waktu_mulai', e.target.value)}
                   />
+                                </div>
+                <div>
+                <Label>Waktu Selesai</Label>
+                <Input
+                    type="time"
+                    value={data.waktu_selesai || ""}
+                    onChange={(e) => setData("waktu_selesai", e.target.value)}
+                />
                 </div>
-
                 <div className="lg:col-span-1">
                   <Label className="text-base font-semibold">QR per Keluarga</Label>
                   <Input

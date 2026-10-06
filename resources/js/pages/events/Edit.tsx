@@ -16,6 +16,7 @@ export default function EventEdit() {
     nama: acara.nama || "",
     tanggal: acara.tanggal ? acara.tanggal.split('T')[0].split(' ')[0] : "",
     waktu_mulai: acara.waktu_mulai || "",
+    waktu_selesai: acara.waktu_selesai || "",
     tempat: acara.tempat || "",
     alamat: acara.alamat || "",
     qr_per_keluarga: acara.qr_per_keluarga || 4,
@@ -92,6 +93,14 @@ export default function EventEdit() {
                     value={data.waktu_mulai}
                     onChange={(e) => setData('waktu_mulai', e.target.value)}
                   />
+                </div>
+                <div>
+                <Label>Waktu Selesai</Label>
+                <Input
+                    type="time"
+                    value={data.waktu_selesai || ""}
+                    onChange={(e) => setData("waktu_selesai", e.target.value)}
+                />
                 </div>
 
                 <div className="lg:col-span-1">

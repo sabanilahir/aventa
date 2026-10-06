@@ -63,18 +63,16 @@ class GuestRegisterController extends Controller
             return;
         }
 
-        $acara = $tamuUtama->acara ?? Acara::find($tamuUtama->acara_id);
-        $target = $this->formatPhone($tamuUtama->no_telepon ?? '');
+        $acara =$tamuUtama->acara ?? Acara::find($tamuUtama->acara_id);$target = $this->formatPhone($tamuUtama->no_telepon ?? '');
         if (empty($target)) {
             return;
         }
 
-        $formatTanggal = $acara && $acara->tanggal ? date('F d, Y', strtotime($acara->tanggal)) : 'October 30, 2026';
-        $waktu = $acara ? $acara->waktu_mulai : '16:00';
-        $lokasiNama = $acara ? ($acara->tempat ?? 'Jakarta') : 'Jakarta';
+        $formatTanggal = $acara &&$acara->tanggal ? date('F d, Y', strtotime($acara->tanggal)) : 'October 30, 2026';
+        $waktu =$acara ? $acara->waktu_mulai : '16:00';$lokasiNama = $acara ? ($acara->tempat ?? 'Jakarta') : 'Jakarta';
 
         // Nama penyelenggara acara
-        $namaPenyelenggara = ($acara && !empty($acara->nama_perusahaan)) ? $acara->nama_perusahaan : "PAI";
+        $namaPenyelenggara = ($acara && !empty($acara->nama_perusahaan)) ?$acara->nama_perusahaan : "PAI";
 
         // Link Utama Website Event
         $mainWebsiteUrl = "https://event.paidesign.com";
@@ -82,43 +80,40 @@ class GuestRegisterController extends Controller
 
         // --- GENERATE LINK GOOGLE CALENDAR ---
         // 1. Ambil tanggal bersih (hanya ambil 10 karakter pertama: YYYY-MM-DD)
-        $rawTanggal = ($acara && !empty($acara->tanggal)) ? $acara->tanggal : '2026-11-01';
+        $rawTanggal = ($acara && !empty($acara->tanggal)) ?$acara->tanggal : '2026-11-01';
         $tanggalAcara = substr($rawTanggal, 0, 10); // Hasil dijamin '2026-11-01'
 
         // 2. Ambil waktu mulai yang bersih (format HH:MM atau HH:MM:SS)
-        $rawWaktu = ($acara && !empty($acara->waktu_mulai)) ? $acara->waktu_mulai : '10:16:00';
-        $waktuMulai = strlen($rawWaktu) >= 5 ? substr($rawWaktu, 0, 8) : '10:16:00';
+        $rawWaktu = ($acara && !empty($acara->waktu_mulai)) ? $acara->waktu_mulai : '10:16:00';$waktuMulai = strlen($rawWaktu) >= 5 ? substr($rawWaktu, 0, 8) : '10:16:00';
 
-        // 3. Buat timestamp mulai dan selesai dengan aman
-        $startTimestamp = strtotime("$tanggalAcara $waktuMulai");
-        $endTimestamp = $startTimestamp + (3 * 3600); // Ditambah 3 jam (dalam detik)
+        // 3. Ambil waktu selesai dari database (fallback ke 18:00:00 jika kosong)
+        $rawWaktuSelesai = ($acara && !empty($acara->waktu_selesai)) ? $acara->waktu_selesai : '18:00:00';$waktuSelesai = strlen($rawWaktuSelesai) >= 5 ? substr($rawWaktuSelesai, 0, 8) : '18:00:00';
 
-        $startDateTime = date('Ymd\THis', $startTimestamp);
-        $endDateTime = date('Ymd\THis', $endTimestamp);
+        // 4. Buat timestamp mulai dan selesai dengan aman
+        $startTimestamp = strtotime("$tanggalAcara$waktuMulai");
+        $endTimestamp = strtotime("$tanggalAcara$waktuSelesai");
+
+        // Pengaman jika waktu selesai lebih awal dari waktu mulai
+        if ($endTimestamp <=$startTimestamp) {
+            $endTimestamp =$startTimestamp + (2 * 3600);
+        }
+
+        $startDateTime = date('Ymd\THis',$startTimestamp);
+        $endDateTime = date('Ymd\THis',$endTimestamp);
 
         $eventTitle = urlencode(($namaPenyelenggara ?? 'Event') . "'s 40th Anniversary");
         $eventLocation = urlencode($lokasiNama ?? 'Jakarta');
         $eventDetails = urlencode("E-Ticket Token: " . $tamuUtama->token . "\nKunjungi website event: " . ($mainWebsiteUrl ?? '#'));
 
-        // $calendarUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE&text={$eventTitle}&dates={$startDateTime}/{$endDateTime}&details={$eventDetails}&location={$eventLocation}";
-
         $calendarUrl = "https://calendar.google.com/calendar/render?action=TEMPLATE&text={$eventTitle}&dates={$startDateTime}/{$endDateTime}&details={$eventDetails}&location={$eventLocation}";
 
-        // Buat Short Link untuk Calendar agar pesan WhatsApp tidak terlalu panjang
-        $shortCalendarCode = Str::random(6);
-        ShortLink::create([
-            'code' => $shortCalendarCode,
-            'url_asli' => $calendarUrl,
-        ]);
-        $shortCalendarUrl = url('/s/' . $shortCalendarCode);
         // 1. Buat folder penyimpanan sementara secara fisik di public/qrcodes
         $destinationDir = public_path('qrcodes');
         if (!file_exists($destinationDir)) {
             mkdir($destinationDir, 0755, true);
         }
 
-        $fileName = 'eticket_' . $tamuUtama->token . '.png';
-        $filePath = $destinationDir . '/' . $fileName;
+        $fileName = 'eticket_' . $tamuUtama->token . '.png';$filePath = $destinationDir . '/' .$fileName;
 
         // Ambil gambar dari API QR generator lalu simpan sebagai file fisik `.png` di server
         $qrExternalUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=" . urlencode($tamuUtama->token) . "&format=png";
@@ -126,7 +121,7 @@ class GuestRegisterController extends Controller
         try {
             $imageContent = @file_get_contents($qrExternalUrl);
             if ($imageContent) {
-                file_put_contents($filePath, $imageContent);
+                file_put_contents($filePath,$imageContent);
             }
         } catch (\Exception $e) {
             Log::error("Gagal mendownload QR image: " . $e->getMessage());
@@ -136,6 +131,7 @@ class GuestRegisterController extends Controller
         // 2. SUSUN PESAN LENGKAP BESERTA LINK UTAMA WEBSITE
         // ==========================================
         $waktuBersih = substr($waktu, 0, 5);
+        $waktuSelesaiBersih = substr($waktuSelesai, 0, 5);
 
         $captionFull = "Thank you, *" . $tamuUtama->nama . "*!\n";
         $captionFull .= "Your RSVP has been confirmed.\n\n";
@@ -144,19 +140,18 @@ class GuestRegisterController extends Controller
         $captionFull .= "Name : " . $tamuUtama->nama . "\n";
         $captionFull .= "Token : " . $tamuUtama->token . "\n\n";
         $captionFull .= "📅 " . $formatTanggal . "\n";
-        $captionFull .= "🕒 " . $waktuBersih . " - 18:00 WIB\n\n";
+        $captionFull .= "🕒 " . $waktuBersih . " - " . $waktuSelesaiBersih . " WIB\n\n";
         $captionFull .= "We look forward to welcoming you at " . $namaPenyelenggara . "'s 40th Anniversary Celebration!\n\n";
         // $captionFull .= "🌐 Website Event: " . $mainWebsiteUrl . "\n";
         // $captionFull .= "📍 Location: " . $lokasiNama . "\n";
         $captionFull .= "🔗 Open Map: " . $mapsUrl . "\n";
-        $captionFull .= "📆 Add to Calendar: " . $shortCalendarUrl;
+        $captionFull .= "📆 Add to Calendar: " . $calendarUrl;
 
         // ==========================================
         // 3. KIRIM SEKALIGUS (GAMBAR + KAPTION) VIA CURLFILE
         // ==========================================
         try {
-            if (file_exists($filePath)) {
-                $ch = curl_init();
+            if (file_exists($filePath)) {$ch = curl_init();
                 curl_setopt_array($ch, [
                     CURLOPT_URL => 'https://api.fonnte.com/send',
                     CURLOPT_RETURNTRANSFER => true,
@@ -164,7 +159,7 @@ class GuestRegisterController extends Controller
                     CURLOPT_POSTFIELDS => [
                         'target' => $target,
                         'message' => $captionFull,
-                        'file' => new \CURLFile($filePath, 'image/png', $fileName)
+                        'file' => new \CURLFile($filePath, 'image/png',$fileName)
                     ],
                     CURLOPT_HTTPHEADER => ['Authorization: ' . $setting->api_token],
                     CURLOPT_TIMEOUT => 60,
