@@ -43,19 +43,18 @@ Route::get('/s/{code}', function ($code) {
     $shortLink = ShortLink::where('code', $code)->firstOrFail();
     return redirect()->away($shortLink->url_asli);
 });
-
-Route::post("/guest/tamu/import", [ImportTamuCsv::class, "processCsv"])->name("guest.tamu.import.process");
-    Route::get("/register/{token}", [GuestRegisterController::class, "show"])->name("guest.register");
+Route::withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+     Route::get("/register/{token}", [GuestRegisterController::class, "show"])->name("guest.register");
     Route::post("/guest/register/simpan", [GuestRegisterController::class, "store"])->name("guest.register.store");
     Route::post("/logout", [AuthenticatedSessionController::class, "destroy"])->name("logout");
     Route::post("/face-api/register", [FaceVerificationController::class, "registerFace"]);
     Route::get("/face-api/status", [FaceVerificationController::class, "checkFaceStatus"]);
     Route::delete("/face-api/delete", [FaceVerificationController::class, "deleteFace"]);
     Route::post("/wa-settings/test-connection", [WaSettingController::class, "testConnection"]);
+    Route::post("/wa-settings/test-send", [WaSettingController::class, "testSend"]);
     Route::post("/guest/tamu/import", [ImportTamuCsv::class, "processCsv"])->name("guest.tamu.import.process");
-Route::post("/guest/tamu/import", [ImportTamuCsv::class, "processCsv"])->name("guest.tamu.import.process");
 
-
+});
 
 Route::middleware(["auth"])->group(function () {
     Route::get("/dashboard", [DashboardUserController::class, "index"])->name("dashboard");
