@@ -1,10 +1,10 @@
 <?php
 
-namespace Database\\Seeders;
-use Illuminate\\Database\\Seeder;
-use App\\Models\\Menu;
-use Spatie\\Permission\\Models\\Role;
-use Spatie\\Permission\\Models\\Permission;
+namespace Database\Seeders;
+use Illuminate\Database\Seeder;
+use App\Models\Menu;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class WeddingMenuSeeder extends Seeder
 {

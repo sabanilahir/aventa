@@ -1,8 +1,9 @@
-
+﻿
 <?php
 
 use App\Http\Controllers\GuestRegisterController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\ImportTamu;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\FaceRegisterController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\WaSettingController;
 use App\Http\Controllers\TamuController;
+use App\Http\Controllers\ImportTamuController;
 use App\Http\Controllers\HadiahController;
 use App\Http\Controllers\SouvenirController;
 use App\Http\Controllers\MejaController;
@@ -28,6 +30,8 @@ use App\Http\Controllers\CheckInController;
 use App\Http\Controllers\GuestDashboardPageController;
 use App\Http\Controllers\BroadcastController;
 use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\DownloadTemplateController;
+use App\Http\Controllers\ImportTamuCsv;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\ShortLink;
@@ -40,7 +44,7 @@ Route::get('/s/{code}', function ($code) {
     return redirect()->away($shortLink->url_asli);
 });
 
-Route::withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+Route::post("/guest/tamu/import", [ImportTamuCsv::class, "processCsv"])->name("guest.tamu.import.process");
     Route::get("/register/{token}", [GuestRegisterController::class, "show"])->name("guest.register");
     Route::post("/guest/register/simpan", [GuestRegisterController::class, "store"])->name("guest.register.store");
     Route::post("/logout", [AuthenticatedSessionController::class, "destroy"])->name("logout");
@@ -48,8 +52,10 @@ Route::withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken
     Route::get("/face-api/status", [FaceVerificationController::class, "checkFaceStatus"]);
     Route::delete("/face-api/delete", [FaceVerificationController::class, "deleteFace"]);
     Route::post("/wa-settings/test-connection", [WaSettingController::class, "testConnection"]);
-    Route::post("/wa-settings/test-send", [WaSettingController::class, "testSend"]);
-});
+    Route::post("/guest/tamu/import", [ImportTamuCsv::class, "processCsv"])->name("guest.tamu.import.process");
+Route::post("/guest/tamu/import", [ImportTamuCsv::class, "processCsv"])->name("guest.tamu.import.process");
+
+
 
 Route::middleware(["auth"])->group(function () {
     Route::get("/dashboard", [DashboardUserController::class, "index"])->name("dashboard");
@@ -112,11 +118,26 @@ Route::middleware(["auth"])->group(function () {
     Route::get("/guest/tamu/create", [TamuController::class, "create"])->name("guest.tamu.create");
     Route::post("/guest/tamu", [TamuController::class, "store"])->name("guest.tamu.store");
     Route::get("/guest/tamu/{tamu}/edit", [TamuController::class, "edit"])->name("guest.tamu.edit");
-    Route::get("/guest/tamu/{tamu}", [TamuController::class, "show"])->name("guest.tamu.show");
+    // Route::get("/guest/tamu/{tamu}", [TamuController::class, "show"])->name("guest.tamu.show");
+    // Route::get('/guest/tamu/template', [DownloadTemplateController::class, 'excelTemplate'])->name('guest.tamu.template');
+    Route::get('/guest/tamu/template', function () {
+    return response()->download(public_path('template/template_import_tamu.xlsx'));
+})->name('guest.tamu.template');
     Route::put("/guest/tamu/{tamu}", [TamuController::class, "update"])->name("guest.tamu.update");
     Route::delete("/guest/tamu/{tamu}", [TamuController::class, "destroy"])->name("guest.tamu.destroy");
+    Route::delete("/guest/tamu/{tamu}", [TamuController::class, "destroy"])->name("guest.tamu.destroy");
     Route::get("/guest/tamu/export", [TamuController::class, "export"])->name("guest.tamu.export");
-    Route::post("/guest/tamu/import", [TamuController::class, "import"])->name("guest.tamu.import");
+    // Route::get("/guest/tamu/import", [ImportTamuController::class, "showUploadForm"])->name("guest.tamu.import");
+    // Route::post("/guest/tamu/import", [ImportTamuController::class, "processImport"])->name("guest.tamu.import.process");
+
+    Route::post("/guest/tamu/{tamu}/checkin", [CheckInController::class, "checkin"])->name("guest.tamu.checkin");
+    // Route::get("/guest/tamu/export", [TamuController::class, "export"])->name("guest.tamu.export");
+    // Route::post("/guest/tamu/import", [TamuController::class, "import"])->name("guest.tamu.import");
+    // Route::get("/guest/tamu/import", [ImportTamuController::class, "showUploadForm"])->name("guest.tamu.import");
+    // Route::post("/guest/tamu/import", [ImportTamuController::class, "processImport"])->name("guest.tamu.import.process");
+Route::get('/guest/tamu/import', [ImportTamuCsv::class, 'showForm'])->name('guest.tamu.import');
+Route::post('/guest/tamu/import', [ImportTamuCsv::class, 'processCsv'])->name('guest.tamu.import.process');
+
     Route::post("/guest/tamu/{tamu}/checkin", [CheckInController::class, "checkin"])->name("guest.tamu.checkin");
     Route::get("/guest/hadiah", [HadiahController::class, "index"])->name("guest.hadiah.index");
     Route::get("/guest/hadiah/create", [HadiahController::class, "create"])->name("guest.hadiah.create");

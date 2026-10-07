@@ -34,13 +34,28 @@ class BroadcastController extends Controller
 
     public function send(Request $request)
     {
-        $request->validate(["acara_id" => "required|exists:acara,id", "message" => "required|string"]);
+        $request->validate([
+            "acara_id" => "required|exists:acara,id",
+            "message" => "required|string",
+            "select_type" => "required|in:all,selected",
+            "tamu_ids" => "array"
+        ]);
 
-        $query = Tamu::where("acara_id", $request->acara_id);
-        if ($request->grup_id && $request->grup_id != "all") {
-            $query->where("grup_id", $request->grup_id);
+        $query = Tamu::where("acara_id", $request->acara_id)
+                     ->whereNull("parent_id")
+                     ->whereNotNull("no_telepon");
+
+        // PERBAIKAN: Filter berdasarkan mode pilihan (all atau selected)
+        if ($request->select_type === "selected" && !empty($request->tamu_ids)) {
+            $query->whereIn("id", $request->tamu_ids);
+        } else {
+            // Jika "all", ikuti filter grup jika ada
+            if ($request->grup_id && $request->grup_id != "all") {
+                $query->where("grup_id", $request->grup_id);
+            }
         }
-        $tamus = $query->whereNull("parent_id")->whereNotNull("no_telepon")->get();
+
+        $tamus = $query->get();
         $acara = Acara::find($request->acara_id);
 
         $sent = 0;

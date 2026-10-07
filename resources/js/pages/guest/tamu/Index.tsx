@@ -4,11 +4,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Edit, Trash2, Users, CheckCircle, Clock, ArrowLeft, Building } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Users, CheckCircle, Clock, ArrowLeft, Building, Upload } from "lucide-react";
 import { useState } from "react";
 
+// Definisikan tipe data props agar aman di TypeScript
+interface PageProps {
+  tamu?: any[];
+  acara?: any;
+  acaras?: any[];
+  [key: string]: any;
+}
+
 export default function GuestTamuIndex() {
-  const { props } = usePage();
+  const { props } = usePage<PageProps>();
   const tamuList = props.tamu || [];
   const acara = props.acara || null;
   const acaras = props.acaras || [];
@@ -19,8 +27,13 @@ export default function GuestTamuIndex() {
   const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
-    nama_depan: "", nama_belakang: "", nama_perusahaan: "",
-    email: "", no_telepon: "", jumlah_undangan: 1, catatan: "",
+    nama_depan: "",
+    nama_belakang: "",
+    nama_perusahaan: "",
+    email: "",
+    no_telepon: "",
+    jumlah_undangan: 1,
+    catatan: "",
   });
 
   const filteredTamu = tamuList.filter((t: any) =>
@@ -29,8 +42,10 @@ export default function GuestTamuIndex() {
 
   const openCreate = () => {
     setEditingTamu(null);
-    setForm({ nama_depan: "", nama_belakang: "", nama_perusahaan: "",
-      email: "", no_telepon: "", jumlah_undangan: 1, catatan: "" });
+    setForm({
+      nama_depan: "", nama_belakang: "", nama_perusahaan: "",
+      email: "", no_telepon: "", jumlah_undangan: 1, catatan: ""
+    });
     setShowModal(true);
   };
 
@@ -41,15 +56,21 @@ export default function GuestTamuIndex() {
       nama_depan: item.nama_depan || parts[0] || "",
       nama_belakang: item.nama_belakang || parts.slice(1).join(" ") || "",
       nama_perusahaan: item.nama_perusahaan || "",
-      email: item.email || "", no_telepon: item.no_telepon || "",
-      jumlah_undangan: item.jumlah_undangan || 1, catatan: item.catatan || "",
+      email: item.email || "",
+      no_telepon: item.no_telepon || "",
+      jumlah_undangan: item.jumlah_undangan || 1,
+      catatan: item.catatan || "",
     });
     setShowModal(true);
   };
 
   const handleSubmit = () => {
-    if (!form.nama_depan.trim()) { alert("Nama Depan wajib diisi"); return; }
+    if (!form.nama_depan.trim()) {
+      alert("Nama Depan wajib diisi");
+      return;
+    }
     setSaving(true);
+
     if (editingTamu) {
       router.put(`/guest/tamu/${editingTamu.id}`, form, {
         onSuccess: () => { setShowModal(false); setSaving(false); },
@@ -64,7 +85,9 @@ export default function GuestTamuIndex() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Yakin hapus?")) { router.delete(`/guest/tamu/${id}`); }
+    if (confirm("Yakin ingin menghapus tamu ini?")) {
+      router.delete(`/guest/tamu/${id}`);
+    }
   };
 
   const changeEvent = (id: number) => {
@@ -78,7 +101,8 @@ export default function GuestTamuIndex() {
     <AppLayout>
       <Head title="Kelola Tamu" />
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header Section */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => router.get("/events")}>
               <ArrowLeft className="w-4 h-4 mr-2" />Kembali
@@ -88,31 +112,49 @@ export default function GuestTamuIndex() {
               <p className="text-sm text-gray-500">{acara?.nama || "Pilih Event"}</p>
             </div>
           </div>
-          <Button onClick={openCreate}><Plus className="w-4 h-4 mr-2" />Tambah Tamu</Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => router.get("/guest/tamu/import")}>
+              <Upload className="w-4 h-4 mr-2" />Import CSV
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus className="w-4 h-4 mr-2" />Tambah Tamu
+            </Button>
+          </div>
         </div>
 
+        {/* Event Selector Tabs */}
         {acaras.length > 0 && (
           <div className="flex gap-2 flex-wrap">
             {acaras.map((a: any) => (
-              <button key={a.id} onClick={() => changeEvent(a.id)}
-                className={`px-4 py-2 rounded-full text-sm ${acara?.id === a.id ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}>
+              <button
+                key={a.id}
+                onClick={() => changeEvent(a.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  acara?.id === a.id
+                    ? "bg-purple-600 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
                 {a.nama}
               </button>
             ))}
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-4">
+        {/* Statistic Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card><CardContent className="p-4 text-center">
             <Users className="w-8 h-8 mx-auto mb-2 text-blue-600" />
             <p className="text-2xl font-bold">{total}</p>
             <p className="text-sm text-gray-500">Total Tamu</p>
           </CardContent></Card>
+
           <Card><CardContent className="p-4 text-center">
             <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-600" />
             <p className="text-2xl font-bold">{hadir}</p>
             <p className="text-sm text-gray-500">Sudah Hadir</p>
           </CardContent></Card>
+
           <Card><CardContent className="p-4 text-center">
             <Clock className="w-8 h-8 mx-auto mb-2 text-yellow-600" />
             <p className="text-2xl font-bold">{total - hadir}</p>
@@ -120,11 +162,18 @@ export default function GuestTamuIndex() {
           </CardContent></Card>
         </div>
 
+        {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <Input placeholder="Cari nama tamu..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          <Input
+            placeholder="Cari nama tamu..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
+        {/* Table Section */}
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -179,23 +228,45 @@ export default function GuestTamuIndex() {
           </div>
         </Card>
 
+        {/* Modal Form */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-md mx-4">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4">{editingTamu ? "Edit Tamu" : "Tambah Tamu"}</h2>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Nama Depan *</Label><Input value={form.nama_depan} onChange={(e) => setForm({...form, nama_depan: e.target.value})} placeholder="Nama Depan" /></div>
-                    <div><Label>Nama Belakang</Label><Input value={form.nama_belakang} onChange={(e) => setForm({...form, nama_belakang: e.target.value})} placeholder="Nama Belakang" /></div>
+                    <div>
+                      <Label>Nama Depan *</Label>
+                      <Input value={form.nama_depan} onChange={(e) => setForm({...form, nama_depan: e.target.value})} placeholder="Nama Depan" />
+                    </div>
+                    <div>
+                      <Label>Nama Belakang</Label>
+                      <Input value={form.nama_belakang} onChange={(e) => setForm({...form, nama_belakang: e.target.value})} placeholder="Nama Belakang" />
+                    </div>
                   </div>
-                  <div><Label>Perusahaan</Label><Input value={form.nama_perusahaan} onChange={(e) => setForm({...form, nama_perusahaan: e.target.value})} placeholder="Nama Perusahaan" /></div>
+                  <div>
+                    <Label>Perusahaan</Label>
+                    <Input value={form.nama_perusahaan} onChange={(e) => setForm({...form, nama_perusahaan: e.target.value})} placeholder="Nama Perusahaan" />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} placeholder="email@domain.com" /></div>
-                    <div><Label>No. WA</Label><Input value={form.no_telepon} onChange={(e) => setForm({...form, no_telepon: e.target.value})} placeholder="08xxxxxxxxxx" /></div>
+                    <div>
+                      <Label>Email</Label>
+                      <Input type="email" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} placeholder="email@domain.com" />
+                    </div>
+                    <div>
+                      <Label>No. WA</Label>
+                      <Input value={form.no_telepon} onChange={(e) => setForm({...form, no_telepon: e.target.value})} placeholder="08xxxxxxxxxx" />
+                    </div>
                   </div>
-                  <div><Label>Jumlah Undangan</Label><Input type="number" min="1" value={form.jumlah_undangan} onChange={(e) => setForm({...form, jumlah_undangan: parseInt(e.target.value) || 1})} /></div>
-                  <div><Label>Catatan</Label><Input value={form.catatan} onChange={(e) => setForm({...form, catatan: e.target.value})} placeholder="Catatan" /></div>
+                  <div>
+                    <Label>Jumlah Undangan</Label>
+                    <Input type="number" min="1" value={form.jumlah_undangan} onChange={(e) => setForm({...form, jumlah_undangan: parseInt(e.target.value) || 1})} />
+                  </div>
+                  <div>
+                    <Label>Catatan</Label>
+                    <Input value={form.catatan} onChange={(e) => setForm({...form, catatan: e.target.value})} placeholder="Catatan" />
+                  </div>
                 </div>
                 <div className="flex gap-4 mt-6 justify-end">
                   <Button variant="outline" onClick={() => setShowModal(false)}>Batal</Button>
@@ -209,4 +280,3 @@ export default function GuestTamuIndex() {
     </AppLayout>
   );
 }
-
